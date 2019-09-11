@@ -1,4 +1,4 @@
-module negroni-logrus
+module github.com/Bestowinc/negroni-logrus
 
 go 1.12
 
