@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/urfave/negroni"
-	"github.com/meatballhat/negroni-logrus"
+	"negroni-logrus"
 )
 
 func main() {
