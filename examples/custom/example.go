@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/negroni"
-	"negroni-logrus"
+	"github.com/Bestowinc/negroni-logrus"
 )
 
 var quiet bool
