@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
-	"github.com/meatballhat/negroni-logrus"
+	"negroni-logrus"
 )
 
 func main() {
