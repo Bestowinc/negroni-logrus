@@ -133,12 +133,15 @@ func (m *Middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next htt
 		entry.Info("started handling request")
 	}
 
-	next(rw, r)
+	newCtx := ToContext(r.Context(), entry)
+	next(rw, r.WithContext(newCtx))
 
 	latency := m.clock.Since(start)
 	res := rw.(negroni.ResponseWriter)
 
-	m.After(entry, res, latency, m.Name).Info("completed handling request")
+	// re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+	log := Extract(newCtx)
+	m.After(log, res, latency, m.Name).Info("completed handling request")
 }
 
 // BeforeFunc is the func type used to modify or replace the *logrus.Entry prior
