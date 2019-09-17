@@ -17,6 +17,7 @@ type timer interface {
 
 type realClock struct{}
 
+
 func (rc *realClock) Now() time.Time {
 	return time.Now()
 }
@@ -137,11 +138,30 @@ func (m *Middleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next htt
 	next(rw, r.WithContext(newCtx))
 
 	latency := m.clock.Since(start)
-	res := rw.(negroni.ResponseWriter)
-
-	// re-extract logger from newCtx, as it may have extra fields that changed in the holder.
-	log := Extract(newCtx)
-	m.After(log, res, latency, m.Name).Info("completed handling request")
+	res, ok := rw.(negroni.ResponseWriter)
+	if !ok {
+		//ugly hack that will prevent us from merging our changes to the upstream repo!
+		//unfortunately net/http does not come with same intercepting mechanism grpc package offers
+		//so most HTTP handlers use a technique that wraps ResponseWriter with a private structure
+		//to intercept some metrics about the request. For example, there is no way to get the response status code
+		//from the built in ResponseWriter interface so one would need to wrap it as explained here:
+		//https://www.reddit.com/r/golang/comments/7p35s4/how_do_i_get_the_response_status_for_my_middleware/
+		//Unfortunately again, there are as many wrappers as HTTP handlers in the chain and we are at their mercy to
+		//expose the data we need or the original object it wraps...
+		//Our problem is that we are using OpenCensus HTTP Handler to instrument our HTTP server with OpenCensus
+		//and it is f***g dumb! as everyone else it wraps ResponseWriter with a private struct
+		//and it provides no public interface to cast...
+		//So the work around I came up with involves putting the original ResponseWriter
+		//(which happens to be negroni.ResponseWriter) on the request context before calling OpenCensus handler
+		//here we fall back and read it from the context
+		rw  = ExtractWriter(r.Context())
+		res, ok = rw.(negroni.ResponseWriter)
+	}
+	if ok {
+		// re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+		log := Extract(newCtx)
+		m.After(log, res, latency, m.Name).Info("completed handling request")
+	}
 }
 
 // BeforeFunc is the func type used to modify or replace the *logrus.Entry prior
