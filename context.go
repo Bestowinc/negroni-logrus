@@ -2,11 +2,15 @@ package negronilogrus
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ctxLoggerMarker struct{}
+
+type ctxWriterKey struct{}
+
 
 type ctxLogger struct {
 	logger *logrus.Entry
@@ -47,3 +51,14 @@ func ToContext(ctx context.Context, entry *logrus.Entry) context.Context {
 	return context.WithValue(ctx, ctxLoggerKey, l)
 }
 
+//ExtractWriter extracts ResponseWriter
+func ExtractWriter(ctx context.Context) http.ResponseWriter {
+	rw, _ := ctx.Value(ctxWriterKey{}).(http.ResponseWriter)
+	return rw
+}
+
+// AddWriterToContext adds ResponseWriter to the context for extraction later.
+// Returning the new context that has been created.
+func AddWriterToContext(ctx context.Context, rw http.ResponseWriter) context.Context {
+	return context.WithValue(ctx, ctxWriterKey{}, rw)
+}
