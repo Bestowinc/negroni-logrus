@@ -1,6 +1,6 @@
 module github.com/Bestowinc/negroni-logrus
 
-go 1.12
+go 1.13
 
 require (
 	github.com/meatballhat/negroni-logrus v0.0.0-20170801195057-31067281800f
